@@ -1,0 +1,170 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"
+    />
+    <meta
+      http-equiv="Cache-Control"
+      content="no-cache,no-store,must-revalidate"
+    />
+    <title>Ember Quest</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #081020;
+        color: white;
+        font-family: monospace;
+        touch-action: none;
+      }
+      canvas {
+        width: 100%;
+        height: 100%;
+        display: block;
+        image-rendering: pixelated;
+      }
+      .hud {
+        position: fixed;
+        z-index: 3;
+        top: 10px;
+        left: 10px;
+        right: 10px;
+        display: flex;
+        justify-content: space-between;
+        text-shadow: 2px 2px #000;
+        font-weight: bold;
+      }
+      .hud a {
+        color: #fff;
+        text-decoration: none;
+        background: #071225bb;
+        padding: 8px;
+        border-radius: 8px;
+      }
+      .stats {
+        background: #071225bb;
+        padding: 8px;
+        border-radius: 8px;
+      }
+      .controls {
+        position: fixed;
+        z-index: 4;
+        bottom: 14px;
+        left: 14px;
+        right: 14px;
+        display: flex;
+        justify-content: space-between;
+        pointer-events: none;
+      }
+      .group {
+        display: flex;
+        gap: 10px;
+        align-items: end;
+      }
+      .btn {
+        pointer-events: auto;
+        width: 68px;
+        height: 68px;
+        border: 2px solid #ffffff66;
+        border-radius: 18px;
+        background: #102654bb;
+        color: #fff;
+        font: bold 24px monospace;
+      }
+      .jump {
+        width: 78px;
+        height: 78px;
+        border-radius: 50%;
+        background: #e34558bb;
+      }
+      .fire {
+        border-radius: 50%;
+        font-size: 12px;
+        background: #df8a35bb;
+      }
+      .screen {
+        position: fixed;
+        z-index: 6;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        background: #081126e8;
+        text-align: center;
+        padding: 22px;
+      }
+      .card {
+        max-width: 570px;
+        border: 3px solid white;
+        border-radius: 16px;
+        background: #071225;
+        padding: clamp(24px, 6vw, 45px);
+        box-shadow: 0 0 0 7px #263765;
+      }
+      .card h1 {
+        font-size: clamp(42px, 12vw, 76px);
+        line-height: 0.83;
+        color: #ffcc4b;
+        text-shadow: 5px 5px #a52e50;
+        margin: 0;
+      }
+      .card p {
+        line-height: 1.55;
+        color: #c7d7eb;
+      }
+      .start {
+        border: 0;
+        border-radius: 10px;
+        padding: 14px 25px;
+        background: #ffcc4b;
+        color: #21142c;
+        font: bold 17px monospace;
+        box-shadow: 0 5px #a85b34;
+      }
+      .hidden {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="game"></canvas>
+    <div class="hud">
+      <a href="index.html">‹ ARCADE</a>
+      <div class="stats">
+        <span id="world">1-1</span> · ✦ <b id="gems">0</b> · ♥ <b id="hp">3</b>
+      </div>
+    </div>
+    <div class="controls">
+      <div class="group">
+        <button class="btn" data-k="left">◀</button
+        ><button class="btn" data-k="right">▶</button>
+      </div>
+      <div class="group">
+        <button class="btn fire" data-k="fire">EMBER</button
+        ><button class="btn jump" data-k="jump">▲</button>
+      </div>
+    </div>
+    <div id="screen" class="screen">
+      <div class="card">
+        <h1>EMBER<br />QUEST</h1>
+        <h2>THE CLOCKWORK KINGDOM</h2>
+        <p>
+          The Sun Engine has been stolen. Run three kingdoms, find the hidden
+          star paths, and carry the last living ember into the Clockwork King's
+          fortress.
+        </p>
+        <button id="start" class="start">BEGIN QUEST</button>
+        <p><small>ARROWS / A D · SPACE TO JUMP · X TO THROW</small></p>
+      </div>
+    </div>
+    <script src="ember-quest.js?v=4"></script>
+  </body>
+</html>
