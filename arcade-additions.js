@@ -8,6 +8,10 @@
     "beforeend",
     '<a class="game" href="ember-quest.html"><div class="poster ember"><div class="emberhero"></div></div><div class="info"><div class="num">GAME 004 · 16-BIT PLATFORMER</div><h3>EMBER QUEST</h3><p>Run three kingdoms, uncover hidden paths, hurl living fire, and steal back the sun.</p><span class="play"><b>▶</b> PLAY NOW</span></div></a>',
   );
+  games.insertAdjacentHTML(
+    "beforeend",
+    '<a class="game" href="snowline.html"><div class="poster snowline"><div class="snowpeak"></div><div class="snowrider"></div></div><div class="info"><div class="num">GAME 005 · DOWNHILL ARCADE</div><h3>SNOWLINE</h3><p>Carve gates, launch ridges, throw reckless tricks, and outrun the mountain.</p><span class="play"><b>▶</b> PLAY NOW</span></div></a>',
+  );
   const count = document.querySelector(".section-head small");
-  if (count) count.textContent = "4 GAMES ONLINE";
+  if (count) count.textContent = "5 GAMES ONLINE";
 })();

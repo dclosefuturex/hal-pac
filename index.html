@@ -8,7 +8,7 @@
       content="no-cache, no-store, must-revalidate"
     />
     <title>HAL Arcade</title>
-    <script src="arcade-additions.js?v=4" defer></script>
+    <script src="arcade-additions.js?v=5" defer></script>
     <style>
       * {
         box-sizing: border-box;
@@ -327,6 +327,70 @@
       @media (max-width: 720px) {
         .wrap {
           padding-top: 25px;
+        }
+        .snowline {
+          background: linear-gradient(#163554 0 40%, #dff8ff 40%);
+          overflow: hidden;
+        }
+        .snowpeak {
+          position: absolute;
+          left: -10%;
+          right: -10%;
+          top: 95px;
+          height: 230px;
+          background: #b8e5ef;
+          clip-path: polygon(
+            0 65%,
+            20% 30%,
+            32% 52%,
+            52% 4%,
+            67% 48%,
+            82% 25%,
+            100% 66%,
+            100% 100%,
+            0 100%
+          );
+        }
+        .snowpeak:after {
+          content: "";
+          position: absolute;
+          inset: 45px 0 0;
+          background: #f5fdff;
+          clip-path: polygon(
+            0 58%,
+            20% 22%,
+            32% 45%,
+            52% 0,
+            67% 42%,
+            82% 18%,
+            100% 60%,
+            100% 100%,
+            0 100%
+          );
+        }
+        .snowrider {
+          position: absolute;
+          z-index: 1;
+          top: 180px;
+          left: 52%;
+          width: 12px;
+          height: 62px;
+          background: #ff416c;
+          transform: rotate(24deg);
+          box-shadow:
+            -22px 35px 0 -3px #18364e,
+            18px 38px 0 -3px #18364e;
+        }
+        .snowrider:after {
+          content: "";
+          position: absolute;
+          width: 82px;
+          height: 7px;
+          border-radius: 50%;
+          background: #142a40;
+          left: -34px;
+          top: 58px;
+          transform: rotate(-12deg);
         }
         .hero {
           padding: 70px 0 45px;

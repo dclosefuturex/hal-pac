@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"
+    />
+    <meta
+      http-equiv="Cache-Control"
+      content="no-cache, no-store, must-revalidate"
+    />
+    <title>Snowline · HAL Arcade</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #07111f;
+        color: #fff;
+        font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+        touch-action: none;
+      }
+      canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+      .top {
+        position: fixed;
+        z-index: 2;
+        inset: 18px 18px auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        pointer-events: none;
+      }
+      .back {
+        pointer-events: auto;
+        text-decoration: none;
+        color: #dff8ff;
+        border: 1px solid #ffffff35;
+        background: #07111f99;
+        border-radius: 99px;
+        padding: 9px 14px;
+        font:
+          700 11px ui-monospace,
+          monospace;
+        letter-spacing: 1px;
+      }
+      .hud {
+        text-align: right;
+        font:
+          700 11px ui-monospace,
+          monospace;
+        letter-spacing: 1px;
+        text-shadow: 0 2px 8px #001;
+      }
+      .hud strong {
+        display: block;
+        font-size: 24px;
+        color: #fff;
+      }
+      .hud span {
+        color: #89e8ff;
+      }
+      .panel {
+        position: fixed;
+        z-index: 3;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        background: linear-gradient(#07111f44, #07111fcc);
+        padding: 24px;
+        text-align: center;
+      }
+      .card {
+        max-width: 560px;
+      }
+      .kicker {
+        font:
+          800 11px ui-monospace,
+          monospace;
+        letter-spacing: 4px;
+        color: #75eaff;
+      }
+      .card h1 {
+        font-size: clamp(58px, 15vw, 118px);
+        line-height: 0.78;
+        letter-spacing: -7px;
+        margin: 18px 0 26px;
+        font-style: italic;
+      }
+      .card h1 span {
+        display: block;
+        color: #79e9ff;
+      }
+      .card p {
+        max-width: 500px;
+        margin: 0 auto 24px;
+        color: #bed2df;
+        line-height: 1.55;
+      }
+      .card button {
+        border: 0;
+        border-radius: 99px;
+        padding: 15px 27px;
+        background: #fff;
+        color: #06111d;
+        font-weight: 900;
+        letter-spacing: 2px;
+        cursor: pointer;
+        box-shadow: 0 10px 40px #71ddff55;
+      }
+      .help {
+        margin-top: 22px !important;
+        font:
+          11px ui-monospace,
+          monospace;
+        color: #7692a3 !important;
+      }
+      .controls {
+        position: fixed;
+        z-index: 2;
+        inset: auto 14px 14px;
+        display: none;
+        justify-content: space-between;
+        pointer-events: none;
+      }
+      .pad {
+        display: flex;
+        gap: 10px;
+      }
+      .controls button {
+        pointer-events: auto;
+        width: 66px;
+        height: 66px;
+        border-radius: 50%;
+        border: 1px solid #fff5;
+        background: #09243dcc;
+        color: #fff;
+        font-size: 25px;
+        font-weight: 900;
+      }
+      .controls .jump {
+        width: 80px;
+        height: 80px;
+        background: #e84c74dd;
+        font-size: 12px;
+        letter-spacing: 1px;
+      }
+      @media (pointer: coarse), (max-width: 800px) {
+        .controls {
+          display: flex;
+        }
+        .hud strong {
+          font-size: 19px;
+        }
+        .top {
+          inset: 12px 12px auto;
+        }
+        .card h1 {
+          letter-spacing: -4px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="game"></canvas>
+    <div class="top">
+      <a class="back" href="index.html">← ARCADE</a>
+      <div class="hud">
+        <span id="label">SCORE</span><strong id="score">000000</strong>
+        <div id="meta">♥♥♥ · x1</div>
+      </div>
+    </div>
+    <div class="panel" id="panel">
+      <div class="card">
+        <div class="kicker">GAME 005 · DOWNHILL ARCADE</div>
+        <h1>SNOW<span>LINE</span></h1>
+        <p>
+          Carve the mountain, split the gates, launch off ridges, and throw
+          tricks before gravity collects its debt.
+        </p>
+        <button id="start">DROP IN</button>
+        <p class="help">← → / A D CARVE · SPACE JUMP + TRICK · P PAUSE</p>
+      </div>
+    </div>
+    <div class="controls">
+      <div class="pad">
+        <button data-key="left">←</button><button data-key="right">→</button>
+      </div>
+      <button class="jump" data-key="jump">JUMP</button>
+    </div>
+    <script src="snowline.js?v=1"></script>
+  </body>
+</html>
