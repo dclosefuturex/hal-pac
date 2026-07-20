@@ -5,7 +5,7 @@
   const ui = Object.fromEntries(["away","home","inning","count","bases"].map(id => [id, document.querySelector("#"+id)]));
   let W=0,H=0,DPR=1,last=0,state="title",clock=0,inning=1,home=0,away=0,outs=0,balls=0,strikes=0,bases=[false,false,false];
   let pitch=null,pitchDelay=0.8,message="",messageLife=0,particles=[],ballsInPlay=[],crowd=[],wind=0,high=+localStorage.grandSlamBest||0;
-  let aim={x:0,y:0}, keys={}, shake=0, flash=0, pitcherStamina=100, hits=0;
+  let aim={x:0,y:0}, keys={}, shake=0, flash=0, pitcherStamina=100, hits=0, swingAnim=0, swingKind="normal";
   const rand=(a,b)=>a+Math.random()*(b-a), clamp=(v,a,b)=>Math.max(a,Math.min(b,v)), lerp=(a,b,t)=>a+(b-a)*t;
   function resize(){
     DPR=Math.min(2,devicePixelRatio||1); W=innerWidth; H=innerHeight; canvas.width=W*DPR; canvas.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0);
@@ -29,7 +29,10 @@
     pitch={type,speed,targetX,targetY,t:0,duration:clamp(1.48-(speed-65)*.012,.72,1.5),x:0,y:0,z:0,swung:false,resolved:false};pitcherStamina=Math.max(28,pitcherStamina-rand(.8,1.7));
   }
   function swing(kind="normal"){
-    if(state!=="play"||!pitch||pitch.resolved||pitch.swung)return; pitch.swung=true;
+    if(state!=="play")return;
+    swingAnim=.34;swingKind=kind;canvas.dataset.swinging=kind;
+    if(!pitch||pitch.resolved){announce("WAIT FOR THE PITCH",.38);return;}
+    if(pitch.swung)return; pitch.swung=true;
     const timing=1-Math.abs(pitch.t/pitch.duration-.91)/.23;
     const px=pitch.x,py=pitch.y, zoneDist=Math.hypot(aim.x-px,aim.y-py);
     const size=kind==="bunt"?.68:kind==="power"?.34:.48, contact=timing*1.2-zoneDist/(size*1.45)+rand(-.12,.12);
@@ -71,7 +74,7 @@
   document.querySelectorAll("[data-swing]").forEach(b=>b.onpointerdown=e=>{e.preventDefault();swing(b.dataset.swing);});
   startBtn.onclick=()=>state==="pause"?((state="play"),panel.style.display="none"):reset();
   function zone(){const w=Math.min(W*.22,190),h=w*1.28;return{x:W*.5-w/2,y:H*.49,w,h};}
-  function update(dt){if(state!=="play")return;clock+=dt;messageLife=Math.max(0,messageLife-dt);shake=Math.max(0,shake-dt*26);flash=Math.max(0,flash-dt*2.5);
+  function update(dt){if(state!=="play")return;clock+=dt;messageLife=Math.max(0,messageLife-dt);shake=Math.max(0,shake-dt*26);flash=Math.max(0,flash-dt*2.5);swingAnim=Math.max(0,swingAnim-dt);if(!swingAnim)delete canvas.dataset.swinging;
     if(keys.ArrowLeft)inputAim(-dt*.7,0);if(keys.ArrowRight)inputAim(dt*.7,0);if(keys.ArrowUp)inputAim(0,-dt*.7);if(keys.ArrowDown)inputAim(0,dt*.7);
     if(!pitch){pitchDelay-=dt;if(pitchDelay<=0)choosePitch();}
     else if(!pitch.resolved){pitch.t+=dt;const q=clamp(pitch.t/pitch.duration,0,1),ease=q*q;const wiggle=pitch.type.name==="KNUCKLE"?Math.sin(q*28)*.16*(q*q):0;pitch.x=lerp(-.08,pitch.targetX,q)+pitch.type.breakX*Math.sin(q*Math.PI)*q+wiggle;pitch.y=lerp(-1.28,pitch.targetY,ease)+pitch.type.breakY*Math.sin(q*Math.PI)*q;pitch.z=q;
@@ -96,7 +99,7 @@
   function drawZone(){const z=zone();ctx.strokeStyle="#ffffff55";ctx.lineWidth=2;ctx.strokeRect(z.x,z.y,z.w,z.h);ctx.setLineDash([4,5]);ctx.strokeStyle="#ffffff25";ctx.beginPath();ctx.moveTo(z.x+z.w/3,z.y);ctx.lineTo(z.x+z.w/3,z.y+z.h);ctx.moveTo(z.x+z.w*2/3,z.y);ctx.lineTo(z.x+z.w*2/3,z.y+z.h);ctx.moveTo(z.x,z.y+z.h/3);ctx.lineTo(z.x+z.w,z.y+z.h/3);ctx.moveTo(z.x,z.y+z.h*2/3);ctx.lineTo(z.x+z.w,z.y+z.h*2/3);ctx.stroke();ctx.setLineDash([]);
     const ax=z.x+(aim.x+1)*z.w/2,ay=z.y+(aim.y+1)*z.h/2;ctx.strokeStyle="#f7d34c";ctx.lineWidth=2;ctx.beginPath();ctx.arc(ax,ay,18,0,Math.PI*2);ctx.moveTo(ax-25,ay);ctx.lineTo(ax+25,ay);ctx.moveTo(ax,ay-25);ctx.lineTo(ax,ay+25);ctx.stroke();
   }
-  function drawBatter(){const x=W*.68,y=H*.78,s=clamp(W/900,.7,1.45);ctx.save();ctx.translate(x,y);ctx.fillStyle="#182e4a";ctx.fillRect(-22*s,-95*s,43*s,65*s);ctx.fillStyle="#eee";ctx.fillRect(-21*s,-32*s,16*s,38*s);ctx.fillRect(6*s,-32*s,16*s,38*s);ctx.fillStyle="#d79b72";ctx.beginPath();ctx.arc(0,-108*s,18*s,0,Math.PI*2);ctx.fill();ctx.fillStyle="#d7463b";ctx.beginPath();ctx.arc(0,-112*s,20*s,Math.PI,Math.PI*2);ctx.fill();ctx.strokeStyle="#d7a24b";ctx.lineWidth=7*s;ctx.lineCap="round";ctx.beginPath();ctx.moveTo(-8*s,-75*s);ctx.lineTo(44*s,-135*s);ctx.stroke();ctx.restore();}
+  function drawBatter(){const x=W*.68,y=H*.78,s=clamp(W/900,.7,1.45),q=swingAnim?1-swingAnim/.34:0,arc=q<.5?q*2:2-q*2,ease=arc*arc*(3-2*arc),power=swingKind==="power"?1.18:swingKind==="bunt"?.32:1;ctx.save();ctx.translate(x,y);ctx.rotate(ease*.18*power);ctx.fillStyle="#182e4a";ctx.fillRect(-22*s,-95*s,43*s,65*s);ctx.fillStyle="#eee";ctx.fillRect(-21*s,-32*s,16*s,38*s);ctx.fillRect(6*s,-32*s,16*s,38*s);ctx.fillStyle="#d79b72";ctx.beginPath();ctx.arc(0,-108*s,18*s,0,Math.PI*2);ctx.fill();ctx.fillStyle="#d7463b";ctx.beginPath();ctx.arc(0,-112*s,20*s,Math.PI,Math.PI*2);ctx.fill();ctx.save();ctx.translate(-8*s,-75*s);ctx.rotate(-.86+ease*2.75*power);ctx.strokeStyle="#d7a24b";ctx.lineWidth=7*s;ctx.lineCap="round";ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(66*s,-18*s);ctx.stroke();ctx.restore();ctx.restore();}
   function drawBall(){if(pitch&&!pitch.resolved){const z=zone(),q=pitch.z,x=z.x+(pitch.x+1)*z.w/2,y=z.y+(pitch.y+1)*z.h/2,r=lerp(2.5,11,q);ctx.fillStyle=pitch.type.color;ctx.shadowColor=pitch.type.color;ctx.shadowBlur=10*q;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;if(q>.5){ctx.fillStyle="#fff";ctx.font="800 10px ui-monospace";ctx.textAlign="center";ctx.fillText(Math.round(pitch.speed)+" MPH",x,y-r-10);}}
     for(const b of ballsInPlay){const q=b.t/2.2,x=W*.54+Math.sin(b.angle)*b.distance*q,y=H*.76-Math.sin(b.launch*Math.PI/180)*H*1.8*Math.sin(Math.min(1,q)*Math.PI);ctx.fillStyle="#fff";ctx.beginPath();ctx.arc(x,y,Math.max(2,8-q*5),0,Math.PI*2);ctx.fill();}
   }
