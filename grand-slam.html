@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <title>Grand Slam · HAL Arcade</title>
+    <style>
+      * { box-sizing: border-box; }
+      html,body { margin:0; width:100%; height:100%; overflow:hidden; background:#07131d; color:#fff; font-family:Inter,ui-sans-serif,system-ui,sans-serif; touch-action:none; }
+      canvas { display:block; width:100%; height:100%; }
+      .top { position:fixed; z-index:3; inset:14px 14px auto; display:flex; justify-content:space-between; align-items:flex-start; pointer-events:none; }
+      .back { pointer-events:auto; color:#e8fff2; text-decoration:none; padding:9px 14px; border:1px solid #ffffff33; border-radius:99px; background:#06131dbb; font:800 11px ui-monospace,monospace; letter-spacing:1px; }
+      .board { min-width:210px; padding:10px 13px; border:1px solid #ffffff22; border-radius:13px; background:#041018d9; text-align:right; box-shadow:0 10px 35px #0008; font:700 11px ui-monospace,monospace; }
+      .board strong { color:#f9d94c; font-size:19px; }
+      .count { color:#9be8bd; margin-top:3px; }
+      .panel { position:fixed; z-index:4; inset:0; display:grid; place-items:center; padding:24px; background:linear-gradient(#06121b55,#02090ee8); text-align:center; }
+      .card { width:min(660px,100%); }
+      .kicker { color:#7effa7; font:900 11px ui-monospace,monospace; letter-spacing:4px; }
+      h1 { font-size:clamp(58px,14vw,118px); line-height:.78; letter-spacing:-7px; font-style:italic; margin:18px 0 25px; }
+      h1 span { display:block; color:#f7d34c; }
+      .card p { max-width:580px; margin:0 auto 22px; color:#bed0d6; line-height:1.55; }
+      button { border:0; cursor:pointer; font-weight:900; }
+      .start { border-radius:99px; padding:15px 29px; color:#07121b; background:#f7d34c; letter-spacing:2px; box-shadow:0 12px 45px #f7d34c44; }
+      .help { color:#77939e!important; font:11px ui-monospace,monospace; }
+      .controls { position:fixed; z-index:3; inset:auto 12px 12px; display:none; justify-content:space-between; align-items:end; pointer-events:none; }
+      .controls button { pointer-events:auto; color:white; border:1px solid #fff4; background:#071b26dd; box-shadow:0 8px 30px #0008; }
+      .aim { display:grid; grid-template-columns:54px 54px 54px; grid-template-rows:54px 54px; gap:5px; }
+      .aim button { border-radius:13px; font-size:20px; }
+      .aim [data-aim="up"] { grid-column:2; }
+      .aim [data-aim="left"] { grid-row:2; grid-column:1; }
+      .aim [data-aim="down"] { grid-row:2; grid-column:2; }
+      .aim [data-aim="right"] { grid-row:2; grid-column:3; }
+      .swings { display:flex; gap:8px; align-items:end; }
+      .swings button { border-radius:50%; width:64px; height:64px; font-size:10px; letter-spacing:.5px; }
+      .swings .power { width:82px; height:82px; background:#df493d; }
+      .swings .normal { background:#e0aa2e; color:#101820; }
+      .swings .bunt { background:#247c54; }
+      @media (pointer:coarse),(max-width:800px) {
+        .controls { display:flex; }
+        .board { min-width:170px; font-size:9px; }
+        .board strong { font-size:15px; }
+        h1 { letter-spacing:-4px; }
+        .help { display:none; }
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="game"></canvas>
+    <div class="top">
+      <a class="back" href="index.html">← ARCADE</a>
+      <div class="board">
+        <div>VIS <strong id="away">0</strong> &nbsp; HAL <strong id="home">0</strong> &nbsp; <span id="inning">BOT 1</span></div>
+        <div class="count"><span id="count">0-0 · 0 OUT</span> &nbsp; <span id="bases">◇ ◇ ◇</span></div>
+      </div>
+    </div>
+    <div class="panel" id="panel">
+      <div class="card">
+        <div class="kicker">GAME 006 · BALLPARK SIM</div>
+        <h1>GRAND<span>SLAM</span></h1>
+        <p>Read the pitch, own the zone, move runners, and survive three innings under the lights. Every pitch has real break, speed, stamina, and bad intentions.</p>
+        <button class="start" id="start">PLAY BALL</button>
+        <p class="help">ARROWS / MOUSE AIM · SPACE NORMAL · X POWER · B BUNT · P PAUSE</p>
+      </div>
+    </div>
+    <div class="controls">
+      <div class="aim">
+        <button data-aim="up">↑</button><button data-aim="left">←</button><button data-aim="down">↓</button><button data-aim="right">→</button>
+      </div>
+      <div class="swings">
+        <button class="bunt" data-swing="bunt">BUNT</button>
+        <button class="normal" data-swing="normal">SWING</button>
+        <button class="power" data-swing="power">POWER</button>
+      </div>
+    </div>
+    <script src="grand-slam.js?v=1"></script>
+  </body>
+</html>
