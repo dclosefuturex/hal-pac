@@ -79,16 +79,17 @@ for(let i=0;i<44;i++){const z=5-i*8;building((i%2?1:-1)*(10+(i%4)*2.7),z,i);prop
 let hero=new THREE.Group(),mixer=null,clips={},action=null,assetReady=false;
 scene.add(hero);hero.position.set(0,0,2);
 function findClip(words){const all=Object.values(clips);return all.find(c=>words.some(w=>c.name.toLowerCase().includes(w)))||all[0]}
-function playAnim(name,fade=.18){if(!mixer)return;const clip=findClip({run:["run","jog"],jump:["jump"],roll:["roll","slide","crouch"],idle:["idle"],stumble:["hit","fall"]}[name]||[name]);if(!clip)return;const next=mixer.clipAction(clip);if(next===action)return;next.reset().fadeIn(fade).play();if(action)action.fadeOut(fade);action=next}
+function playAnim(name,fade=.18){if(!mixer)return;const clip=findClip({run:["running_a","running_b","run"],jump:["jump_full_short","jump"],roll:["interact","pickup","idle_b"],idle:["idle_a","idle"],stumble:["hit_a","hit","death"]}[name]||[name]);if(!clip)return;const next=mixer.clipAction(clip);if(next===action)return;next.reset().fadeIn(fade).play();if(action)action.fadeOut(fade);action=next}
 async function loadAssets(){
   const gltfLoader=new GLTFLoader();
-  const [character,animationFile]=await Promise.all([
-    gltfLoader.loadAsync("assets/city-rush/models/runner.gltf"),
-    gltfLoader.loadAsync("assets/city-rush/models/animations.glb")
+  const [character,movement,general]=await Promise.all([
+    gltfLoader.loadAsync("assets/city-rush/models/runner-cartoon.glb"),
+    gltfLoader.loadAsync("assets/city-rush/models/cartoon-movement.glb"),
+    gltfLoader.loadAsync("assets/city-rush/models/cartoon-general.glb")
   ]);
-  scene.remove(hero);hero=character.scene;hero.scale.setScalar(1.08);hero.rotation.y=Math.PI;hero.position.set(0,0,2);
-  hero.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;o.frustumCulled=false}});
-  scene.add(hero);mixer=new THREE.AnimationMixer(hero);animationFile.animations.forEach(c=>clips[c.name]=c);playAnim("idle",0);
+  scene.remove(hero);hero=character.scene;hero.scale.setScalar(1.5);hero.rotation.y=Math.PI;hero.position.set(0,0,2);
+  hero.traverse(o=>{if(/quiver/i.test(o.name))o.visible=false;if(o.isMesh){o.castShadow=true;o.receiveShadow=true;o.frustumCulled=false;const old=o.material;o.material=new THREE.MeshToonMaterial({map:old.map,color:old.color});o.material.map&&(o.material.map.colorSpace=THREE.SRGBColorSpace)}});
+  scene.add(hero);mixer=new THREE.AnimationMixer(hero);[...movement.animations,...general.animations].forEach(c=>clips[c.name]=c);playAnim("idle",0);
   try{
     const materials=await new MTLLoader().setPath("assets/city-rush/models/").loadAsync("train-electric-subway-a.mtl");materials.preload();
     const obj=await new OBJLoader().setMaterials(materials).setPath("assets/city-rush/models/").loadAsync("train-electric-subway-a.obj");
@@ -134,7 +135,7 @@ function update(dt){
   if(jumpY<=0){if(vy< -2&&jumpY<0)sparks(0xe7d0a3);jumpY=vy=0;if(!roll)playAnim("run")}
   roll=Math.max(0,roll-dt);if(roll===0&&jumpY===0)playAnim("run");
   if(power.time>0){power.time-=dt;if(power.time<=0){power={type:"",time:0};multi=1}}
-  hero.position.set(laneX,jumpY,2);hero.scale.y=roll?.58:1.08;hero.rotation.z=(lane*2.45-laneX)*-.065;
+  hero.position.set(laneX,jumpY,2);hero.scale.y=roll?.78:1.5;hero.rotation.z=(lane*2.45-laneX)*-.065;
   camera.position.x+=(laneX*.2-camera.position.x)*dt*3;camera.position.y=5.8+jumpY*.12+Math.sin(distance*.035)*.035+(shake?(Math.random()-.5)*shake:0);camera.lookAt(laneX*.11,2,-9);shake=Math.max(0,shake-dt*2.5);
   for(const a of actors){
     a.position.z+=speed*dt;if(["coin","power"].includes(a.userData.type))a.rotation.y+=dt*4;
