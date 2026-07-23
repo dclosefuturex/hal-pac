@@ -76,20 +76,27 @@ function prop(x,z,i){
 }
 for(let i=0;i<44;i++){const z=5-i*8;building((i%2?1:-1)*(10+(i%4)*2.7),z,i);prop((i%2?1:-1)*(7.2+(i%3)*.5),z-3,i)}
 
-let hero=new THREE.Group(),mixer=null,clips={},action=null,assetReady=false;
+let hero=new THREE.Group(),mixer=null,clips={},action=null,assetReady=false,selectedRunner=store.get("runner","skye"),characterModels={};
 scene.add(hero);hero.position.set(0,0,2);
 function findClip(words){const all=Object.values(clips);return all.find(c=>words.some(w=>c.name.toLowerCase().includes(w)))||all[0]}
 function playAnim(name,fade=.18){if(!mixer)return;const clip=findClip({run:["running_a","running_b","run"],jump:["jump_full_short","jump"],roll:["interact","pickup","idle_b"],idle:["idle_a","idle"],stumble:["hit_a","hit","death"]}[name]||[name]);if(!clip)return;const next=mixer.clipAction(clip);if(next===action)return;next.reset().fadeIn(fade).play();if(action)action.fadeOut(fade);action=next}
 async function loadAssets(){
   const gltfLoader=new GLTFLoader();
-  const [character,movement,general]=await Promise.all([
+  const [skye,dash,nova,nox,movement,general,cityLarge,cityMedium,citySmall]=await Promise.all([
     gltfLoader.loadAsync("assets/city-rush/models/runner-cartoon.glb"),
+    gltfLoader.loadAsync("assets/city-rush/models/runner-knight.glb"),
+    gltfLoader.loadAsync("assets/city-rush/models/runner-mage.glb"),
+    gltfLoader.loadAsync("assets/city-rush/models/runner-rogue.glb"),
     gltfLoader.loadAsync("assets/city-rush/models/cartoon-movement.glb"),
-    gltfLoader.loadAsync("assets/city-rush/models/cartoon-general.glb")
+    gltfLoader.loadAsync("assets/city-rush/models/cartoon-general.glb"),
+    gltfLoader.loadAsync("assets/city-rush/models/downtown/Building_Large_2.gltf"),
+    gltfLoader.loadAsync("assets/city-rush/models/downtown/Building_Medium_2_001.gltf"),
+    gltfLoader.loadAsync("assets/city-rush/models/downtown/Building_Small_1.gltf")
   ]);
-  scene.remove(hero);hero=character.scene;hero.scale.setScalar(1.5);hero.rotation.y=Math.PI;hero.position.set(0,0,2);
-  hero.traverse(o=>{if(/quiver/i.test(o.name))o.visible=false;if(o.isMesh){o.castShadow=true;o.receiveShadow=true;o.frustumCulled=false;const old=o.material;o.material=new THREE.MeshToonMaterial({map:old.map,color:old.color});o.material.map&&(o.material.map.colorSpace=THREE.SRGBColorSpace)}});
-  scene.add(hero);mixer=new THREE.AnimationMixer(hero);[...movement.animations,...general.animations].forEach(c=>clips[c.name]=c);playAnim("idle",0);
+  characterModels={skye:skye.scene,dash:dash.scene,nova:nova.scene,nox:nox.scene};
+  [...movement.animations,...general.animations].forEach(c=>clips[c.name]=c);
+  selectRunner(selectedRunner);
+  installCityModels([cityLarge.scene,cityMedium.scene,citySmall.scene]);
   try{
     const materials=await new MTLLoader().setPath("assets/city-rush/models/").loadAsync("train-electric-subway-a.mtl");materials.preload();
     const obj=await new OBJLoader().setMaterials(materials).setPath("assets/city-rush/models/").loadAsync("train-electric-subway-a.obj");
@@ -97,22 +104,60 @@ async function loadAssets(){
   }catch(e){console.warn("Train model fallback",e)}
   assetReady=true;ui.loading.classList.add("hidden");ui.start.disabled=false;ui.start.textContent="START RUN";
 }
+function installCityModels(models){
+  for(let i=0;i<18;i++){
+    const g=models[i%models.length].clone(true),box3=new THREE.Box3().setFromObject(g),size=box3.getSize(new THREE.Vector3()),s=(11+(i%5)*2.2)/Math.max(.1,size.y);
+    g.scale.setScalar(s);g.position.set((i%2?1:-1)*(8.5+(i%3)*1.5),-box3.min.y*s,2-i*18);g.rotation.y=i%2?Math.PI:0;
+    g.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
+    world.add(g);scenery.push(g);
+  }
+}
+function selectRunner(key){
+  if(!characterModels[key])return;selectedRunner=key;store.set("runner",key);
+  scene.remove(hero);hero=characterModels[key];hero.scale.setScalar(1.02);hero.rotation.y=Math.PI;hero.position.set(0,0,2);
+  hero.traverse(o=>{if(/quiver|sword|shield|staff|wand|cape/i.test(o.name))o.visible=false;if(o.isMesh&&!o.userData.styled){o.castShadow=true;o.receiveShadow=true;o.frustumCulled=false;const old=o.material;o.material=new THREE.MeshToonMaterial({map:old.map,color:old.color});o.material.map&&(o.material.map.colorSpace=THREE.SRGBColorSpace);o.userData.styled=true}});
+  scene.add(hero);mixer=new THREE.AnimationMixer(hero);action=null;playAnim(state==="playing"?"run":"idle",0);
+  document.querySelectorAll(".runner").forEach(b=>b.classList.toggle("selected",b.dataset.runner===key));
+}
 
 let trainTemplate=null,actors=[],particles=[];
 function fallbackTrain(){const g=new THREE.Group();g.add(box(1.9,3.3,5.8,M(0xe4e2db),0,1.65,0));g.add(box(1.92,.38,5.82,M(0xe04d3b),0,1.2,0));for(const z of [-2,-.65,.7,2])g.add(box(1.55,.72,.04,mats.glass,0,2.35,z));return g}
-function train(lane,z){const g=trainTemplate?trainTemplate.clone():fallbackTrain();if(trainTemplate)g.scale.set(1.45,1.95,2.2);g.rotation.y=trainTemplate?Math.PI:0;g.position.set(lane*2.45,0,z);g.userData={type:"train",lane};world.add(g);actors.push(g)}
+function train(lane,z,moving=false){const g=trainTemplate?trainTemplate.clone():fallbackTrain();if(trainTemplate)g.scale.set(1.45,1.95,2.2);g.rotation.y=trainTemplate?Math.PI:0;g.position.set(lane*2.45,0,z);g.userData={type:"train",lane,moving};world.add(g);actors.push(g)}
 function barrier(lane,z){const g=new THREE.Group();g.add(box(1.7,1,.32,mats.red,0,.55,0));for(const x of [-.55,0,.55]){const s=box(.16,1.1,.35,mats.yellow,x,.55,.02);s.rotation.z=-.52;g.add(s)}g.position.set(lane*2.45,0,z);g.userData={type:"barrier",lane};world.add(g);actors.push(g)}
 function overhead(lane,z){const g=new THREE.Group();g.add(box(1.9,.34,.3,mats.yellow,0,2.05,0));for(const x of [-.82,.82])g.add(box(.14,2,.2,mats.red,x,1,0));g.position.set(lane*2.45,0,z);g.userData={type:"overhead",lane};world.add(g);actors.push(g)}
+function ramp(lane,z){const g=new THREE.Group(),r=box(1.85,.22,3.2,M(0x36a8d4),0,.45,0);r.rotation.x=-.23;g.add(r,box(1.9,.12,.2,mats.yellow,0,.85,-1.45));g.position.set(lane*2.45,0,z);g.userData={type:"ramp",lane};world.add(g);actors.push(g)}
+function crate(lane,z){const g=new THREE.Group();g.add(box(1.25,1.25,1.25,M(0xc57a35),0,.63,0));for(const a of [-.42,.42]){const s=box(.14,1.3,1.3,M(0xffd04a),a,.63,.01);s.rotation.z=a>0?.65:-.65;g.add(s)}g.position.set(lane*2.45,0,z);g.userData={type:"crate",lane};world.add(g);actors.push(g)}
 function coin(lane,z,y=.95){const m=mesh(new THREE.TorusGeometry(.25,.075,10,24),mats.yellow,lane*2.45,y,z);m.userData={type:"coin",lane};world.add(m);actors.push(m)}
 function powerup(lane,z,type){const colors={magnet:0xf04f5e,board:0x24b8df,jetpack:0xf28c34,boost:0x8658d6},g=new THREE.Group();g.add(mesh(new THREE.DodecahedronGeometry(.42),M(colors[type],{emissive:colors[type],emissiveIntensity:.35}),0,1.1,0));g.position.set(lane*2.45,0,z);g.userData={type:"power",power:type,lane};world.add(g);actors.push(g)}
 function sparks(color=0xffd246){for(let i=0;i<18;i++){const p=mesh(new THREE.SphereGeometry(.035,5,5),M(color,{emissive:color}),hero.position.x,.4+Math.random(),1.6);p.userData={life:.3+Math.random()*.35,v:new THREE.Vector3((Math.random()-.5)*5,Math.random()*4,(Math.random()-.5)*4)};scene.add(p);particles.push(p)}}
 
-let state="menu",speed=20,distance=0,score=0,coins=0,multi=1,lane=0,laneX=0,jumpY=0,vy=0,roll=0,spawn=-28,last=performance.now(),muted=store.get("muted",false),power={type:"",time:0},mission={type:"coins",target:25,progress:0},audio,shake=0;
+let state="menu",speed=20,distance=0,score=0,coins=0,multi=1,streak=0,streakTime=0,lane=0,laneX=0,jumpY=0,vy=0,roll=0,spawn=-28,last=performance.now(),muted=store.get("muted",false),power={type:"",time:0},mission={type:"coins",target:25,progress:0},audio,shake=0;
 function tone(f=440,d=.13){if(muted)return;audio||=new(window.AudioContext||window.webkitAudioContext)();if(audio.state==="suspended")audio.resume();const o=audio.createOscillator(),g=audio.createGain();o.type=f<200?"sawtooth":"triangle";o.frequency.setValueAtTime(f,audio.currentTime);o.frequency.exponentialRampToValueAtTime(f*1.3,audio.currentTime+d);g.gain.setValueAtTime(.065,audio.currentTime);g.gain.exponentialRampToValueAtTime(.001,audio.currentTime+d);o.connect(g).connect(audio.destination);o.start();o.stop(audio.currentTime+d)}
-function spawnSet(){const open=(Math.random()*3|0)-1,z=spawn,pattern=Math.random();for(const l of [-1,0,1])if(l!==open&&Math.random()<.78)(pattern<.34?train:pattern<.68?barrier:overhead)(l,z-Math.random()*2.5);for(let i=0;i<7;i++)coin(open,z-i*2.15,.95+Math.sin(i/6*Math.PI)*1.7);if(Math.random()<.28)powerup(open,z-15,pick(["magnet","board","jetpack","boost"]));spawn-=27+Math.random()*11}
+function coinLine(l,z,n=7,arc=0){for(let i=0;i<n;i++)coin(l,z-i*2.15,.95+(arc?Math.sin(i/(n-1)*Math.PI)*arc:0))}
+function spawnSet(){
+  const z=spawn,p=Math.random(),open=(Math.random()*3|0)-1;
+  if(p<.17){ // classic gate
+    for(const l of [-1,0,1])if(l!==open)pick([barrier,overhead,crate])(l,z-Math.random()*2);coinLine(open,z,8,1.5);
+  }else if(p<.34){ // rapid lane slalom
+    const route=pick([[-1,0,1,0,-1],[1,0,-1,0,1]]);
+    route.forEach((l,i)=>{coinLine(l,z-i*5,2);for(const other of [-1,0,1])if(other!==l&&i%2===0)crate(other,z-i*5)});
+  }else if(p<.49){ // jump rhythm
+    for(let i=0;i<3;i++){barrier(open,z-i*9);coinLine(open,z-i*9+1,4,2.25)}
+    coinLine(open===0?1:0,z-4,8);
+  }else if(p<.62){ // roll tunnel
+    for(let i=0;i<3;i++){overhead(open,z-i*10);coinLine(open,z-i*10,4,.3)}
+  }else if(p<.75){ // oncoming train choice
+    train(open,z,true);const safe=open===0?pick([-1,1]):0;coinLine(safe,z,11);powerup(-open||pick([-1,1]),z-16,pick(["magnet","board","boost"]));
+  }else if(p<.87){ // ramp into airborne coins
+    ramp(open,z);coinLine(open,z-2,10,3.2);for(const l of [-1,0,1])if(l!==open)train(l,z-8);
+  }else{ // freeform coin weave
+    const route=pick([[-1,-1,0,0,1,1],[1,1,0,0,-1,-1]]);route.forEach((l,i)=>coinLine(l,z-i*4,2));powerup(route.at(-1),z-25,pick(["magnet","board","jetpack","boost"]));
+  }
+  spawn-=34+Math.random()*14;
+}
 function reset(){
   actors.forEach(a=>world.remove(a));actors=[];particles.forEach(p=>scene.remove(p));particles=[];
-  state="playing";speed=20;distance=score=coins=0;multi=1;lane=laneX=jumpY=vy=roll=0;spawn=-28;power={type:"",time:0};mission={type:"coins",target:25,progress:0};
+  state="playing";speed=20;distance=score=coins=streak=streakTime=0;multi=1;lane=laneX=jumpY=vy=roll=0;spawn=-28;power={type:"",time:0};mission={type:"coins",target:25,progress:0};
   for(let i=0;i<7;i++)spawnSet();ui.curtain.classList.add("hidden");ui.summary.classList.remove("show");playAnim("run");setDistrict(0,true)
 }
 function move(d){if(state==="playing"){lane=clamp(lane+d,-1,1);tone(180,.06)}}
@@ -134,17 +179,19 @@ function update(dt){
   laneX+=(lane*2.45-laneX)*Math.min(1,dt*11);vy-=29*dt;jumpY+=vy*dt;
   if(jumpY<=0){if(vy< -2&&jumpY<0)sparks(0xe7d0a3);jumpY=vy=0;if(!roll)playAnim("run")}
   roll=Math.max(0,roll-dt);if(roll===0&&jumpY===0)playAnim("run");
+  streakTime=Math.max(0,streakTime-dt);if(streakTime===0&&power.type!=="boost"){streak=0;multi=1}
   if(power.time>0){power.time-=dt;if(power.time<=0){power={type:"",time:0};multi=1}}
-  hero.position.set(laneX,jumpY,2);hero.scale.y=roll?.78:1.5;hero.rotation.z=(lane*2.45-laneX)*-.065;
+  hero.position.set(laneX,jumpY,2);hero.scale.y=roll?.54:1.02;hero.rotation.z=(lane*2.45-laneX)*-.065;
   camera.position.x+=(laneX*.2-camera.position.x)*dt*3;camera.position.y=5.8+jumpY*.12+Math.sin(distance*.035)*.035+(shake?(Math.random()-.5)*shake:0);camera.lookAt(laneX*.11,2,-9);shake=Math.max(0,shake-dt*2.5);
   for(const a of actors){
-    a.position.z+=speed*dt;if(["coin","power"].includes(a.userData.type))a.rotation.y+=dt*4;
+    a.position.z+=speed*dt*(a.userData.moving?1.42:1);if(["coin","power"].includes(a.userData.type))a.rotation.y+=dt*4;
     if(power.type==="magnet"&&a.userData.type==="coin"&&a.position.z>-8&&a.position.z<16)a.position.x+=(laneX-a.position.x)*dt*8;
     const dz=Math.abs(a.position.z-2),dx=Math.abs(a.position.x-laneX);
     if(dz<1.05&&dx<.82&&!a.userData.dead){
-      if(a.userData.type==="coin"){a.userData.dead=true;world.remove(a);coins++;score+=100*multi;mission.progress++;tone(850,.08)}
+      if(a.userData.type==="coin"){a.userData.dead=true;world.remove(a);coins++;streak++;streakTime=2.4;multi=Math.max(multi,Math.min(5,1+(streak/10|0)));score+=100*multi;mission.progress++;if(mission.progress===mission.target){score+=2500;multi=Math.max(3,multi);ui.missionText.textContent="Mission complete · +2500";sparks(0x62ffc5)}tone(850,.08)}
       else if(a.userData.type==="power"){a.userData.dead=true;world.remove(a);activate(a.userData.power)}
-      else{const clear=a.userData.type==="barrier"?jumpY>1.05:a.userData.type==="overhead"?roll>.12:false;a.userData.dead=true;if(!clear)die();else{score+=250*multi;sparks()}}
+      else if(a.userData.type==="ramp"){a.userData.dead=true;vy=Math.max(vy,13.2);playAnim("jump",.08);tone(320,.2)}
+      else{const clear=["barrier","crate"].includes(a.userData.type)?jumpY>.9:a.userData.type==="overhead"?roll>.12:false;a.userData.dead=true;if(!clear)die();else{score+=250*multi;streak+=2;streakTime=2.4;sparks()}}
     }
   }
   actors=actors.filter(a=>!a.userData.dead&&a.position.z<15);while(spawn>-90-distance)spawnSet();
@@ -155,5 +202,6 @@ function loop(now){const dt=Math.min(.04,(now-last)/1000);last=now;update(dt);co
 addEventListener("resize",()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setPixelRatio(Math.min(devicePixelRatio,mobile?1.25:1.75));renderer.setSize(innerWidth,innerHeight);composer.setSize(innerWidth,innerHeight)});
 addEventListener("keydown",e=>{if(["ArrowLeft","a"].includes(e.key))move(-1);if(["ArrowRight","d"].includes(e.key))move(1);if(["ArrowUp","w"," "].includes(e.key)){e.preventDefault();jump()}if(["ArrowDown","s"].includes(e.key))duck()});
 let touch;canvas.addEventListener("pointerdown",e=>touch={x:e.clientX,y:e.clientY});canvas.addEventListener("pointerup",e=>{if(!touch)return;const x=e.clientX-touch.x,y=e.clientY-touch.y;if(Math.hypot(x,y)>24)(Math.abs(x)>Math.abs(y)?()=>move(x>0?1:-1):()=>y<0?jump():duck())();touch=null});
+document.querySelectorAll(".runner").forEach(b=>b.onclick=()=>{if(state!=="playing")selectRunner(b.dataset.runner)});
 ui.start.onclick=()=>assetReady&&reset();ui.pause.onclick=()=>{state=state==="playing"?"paused":"playing";ui.pause.textContent=state==="paused"?"▶":"Ⅱ";if(state==="playing")last=performance.now()};ui.mute.onclick=()=>{muted=!muted;store.set("muted",muted);ui.mute.textContent=muted?"×":"♪"};
 ui.start.disabled=true;ui.start.textContent="LOADING ASSETS…";setDistrict(0,true);loadAssets().catch(e=>{console.error(e);ui.loading.textContent="Asset load failed — refresh to retry"});requestAnimationFrame(loop);

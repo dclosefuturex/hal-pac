@@ -20,11 +20,12 @@
       .curtain{position:fixed;z-index:10;inset:0;display:grid;place-items:center;padding:24px;background:linear-gradient(#61c5f1dd,#ffd27add);text-align:center;transition:.35s opacity}.curtain.hidden{opacity:0;pointer-events:none}.panel{width:min(580px,94vw);padding:34px clamp(20px,5vw,48px);border:4px solid #fff;border-radius:30px;background:linear-gradient(145deg,#145b91f2,#173866f2);box-shadow:0 24px 70px #174d7e77;backdrop-filter:blur(18px)}
       .kicker{color:#ffe166;font-size:11px;font-weight:950;letter-spacing:4px}.panel h1{font-size:clamp(48px,11vw,88px);line-height:.82;letter-spacing:-.07em;margin:17px 0 18px;background:linear-gradient(#fff 10%,#ffe55d 51%,#ff803b);-webkit-background-clip:text;color:transparent;filter:drop-shadow(0 5px 0 #b73d27)}.panel h1 span{display:block;color:#fff;-webkit-text-fill-color:#fff;font-size:.39em;letter-spacing:.22em;margin-top:17px}
       .panel p{color:#a9b9d8;line-height:1.55;margin:0 auto 21px;max-width:440px}.controls{display:flex;justify-content:center;gap:16px;flex-wrap:wrap;margin:17px 0 25px;color:#c9d7ec;font-size:12px}.controls b{color:#fff;background:#ffffff12;border:1px solid #ffffff1b;border-radius:8px;padding:5px 8px}
+      .runner-label{font-size:9px;font-weight:950;letter-spacing:2.5px;color:#7fe9ff;margin:8px 0}.runners{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:0 auto 16px;max-width:430px}.runner{border:2px solid #ffffff30;border-radius:13px;padding:8px 4px;background:#ffffff0b;cursor:pointer;transition:.18s}.runner:hover{background:#ffffff18;transform:translateY(-2px)}.runner.selected{border-color:#ffe05c;background:#37b7d82c;box-shadow:0 0 18px #2de2ff44}.runner i{display:block;font-style:normal;font-size:27px;line-height:1.1}.runner b{display:block;font-size:9px;letter-spacing:1px;margin-top:5px}
       .primary{border:0;border-radius:16px;padding:14px 28px;background:linear-gradient(135deg,#1fe4c5,#258bff);box-shadow:0 12px 35px #20bde84d;color:#03121d;font-weight:950;letter-spacing:1.5px;cursor:pointer;min-width:190px}.primary:hover{filter:brightness(1.13);transform:translateY(-1px)}.back{display:block;margin:17px auto 0;color:#7183a5;font-size:11px;text-decoration:none;letter-spacing:1.6px}.back:hover{color:#fff}
       .summary{display:none;grid-template-columns:repeat(3,1fr);gap:9px;margin:19px 0}.summary.show{display:grid}.summary div{padding:12px 5px;border-radius:12px;background:#ffffff0c}.summary small{display:block;color:#7f91b1;font-size:9px;letter-spacing:1px}.summary b{font-size:20px}
       .countdown{position:fixed;z-index:8;inset:0;display:grid;place-items:center;pointer-events:none;font-size:clamp(90px,22vw,180px);font-weight:950;font-style:italic;text-shadow:0 0 40px #31dfff;opacity:0}.countdown.pop{animation:pop .78s ease}@keyframes pop{0%{opacity:0;transform:scale(1.5)}20%{opacity:1;transform:scale(1)}75%{opacity:1}100%{opacity:0;transform:scale(.7)}}
       .rotate{display:none;position:fixed;z-index:20;inset:0;background:#174d7e;place-items:center;text-align:center;padding:35px;color:#d5ecff}.rotate b{display:block;color:#fff;font-size:38px;margin-bottom:12px}
-      @media(max-width:700px){.hud{top:62px;left:9px;right:9px}.stat{min-width:65px;padding:7px 8px}.stat small{font-size:7px}.stat b{font-size:15px}.stats{gap:5px}.mission{position:fixed;left:9px;right:9px;top:116px;max-width:none;padding:7px 10px}.mission div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.power{top:174px}.panel{padding-top:28px;padding-bottom:28px}.brand{font-size:10px}.icon{width:38px;height:38px}.top{padding-left:11px;padding-right:11px}}
+      @media(max-width:700px){.hud{top:62px;left:9px;right:9px}.stat{min-width:65px;padding:7px 8px}.stat small{font-size:7px}.stat b{font-size:15px}.stats{gap:5px}.mission{position:fixed;left:9px;right:9px;top:116px;max-width:none;padding:7px 10px}.mission div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.power{top:174px}.panel{padding-top:23px;padding-bottom:23px}.panel h1{margin:12px 0}.panel p{font-size:12px;margin-bottom:12px}.runners{gap:5px}.runner{padding:6px 2px}.runner i{font-size:22px}.controls{margin:10px 0 15px}.brand{font-size:10px}.icon{width:38px;height:38px}.top{padding-left:11px;padding-right:11px}}
       @media(max-height:460px) and (orientation:landscape){.rotate{display:grid}}
     </style>
   </head>
@@ -43,6 +44,13 @@
         <h1>CITY<span>RUSH</span></h1>
         <p id="message">Sprint through living city districts with a fully rigged runner, real motion animation, modeled trains, and cinematic lighting.</p>
         <div class="summary" id="summary"><div><small>SCORE</small><b id="finalScore">0</b></div><div><small>DISTANCE</small><b id="finalDistance">0m</b></div><div><small>BEST</small><b id="best">0</b></div></div>
+        <div class="runner-label">CHOOSE YOUR RUNNER</div>
+        <div class="runners" id="runners">
+          <button class="runner selected" data-runner="skye"><i>🛹</i><b>SKYE</b></button>
+          <button class="runner" data-runner="dash"><i>⚡</i><b>DASH</b></button>
+          <button class="runner" data-runner="nova"><i>🔥</i><b>NOVA</b></button>
+          <button class="runner" data-runner="nox"><i>🌙</i><b>NOX</b></button>
+        </div>
         <div class="controls"><span><b>← →</b> MOVE</span><span><b>↑</b> JUMP</span><span><b>↓</b> ROLL</span><span><b>SWIPE</b> MOBILE</span></div>
         <button class="primary" id="start">START RUN</button>
         <a class="back" href="index.html">← RETURN TO ARCADE</a>
@@ -52,6 +60,6 @@
     <div class="district" id="district">DOWNTOWN</div>
     <div class="loading" id="loading">LOADING CHARACTER · MOTION · CITY</div>
     <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
-    <script type="module" src="city-rush-3d.js?v=3"></script>
+    <script type="module" src="city-rush-3d.js?v=4"></script>
   </body>
 </html>
